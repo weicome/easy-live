@@ -1,4 +1,4 @@
-# 基于easyswoolePHP多进程+ffmpeg工具+RSR流媒体服务器
+# 基于easyswoolePHP多进程+ffmpeg工具+SRR流媒体服务器
 
 使用easyswoole的进程管理，调用ffmpeg产生推流，自带第三方开源流媒体服务器SRS
 
