@@ -60,9 +60,9 @@ http://127.0.0.1:9501/close
 ```
 POST http://服务器ip:服务端口/api/create 
 {
-    "app": "live"
-	"stream": "唯一名称",
-	"live_host": "推流地址",//不同设备rtsp地址可能不一样	
+    "app": "live",
+    "stream": "唯一名称",
+    "live_host": "推流地址",//不同设备rtsp地址可能不一样	
 }
 ```
 2.编辑设备
