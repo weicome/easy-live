@@ -35,8 +35,11 @@ class FFmpegProcess extends AbstractProcess
             1 => array("pipe", "w"),
             2 => array("file",EASYSWOOLE_ROOT. "/Log/error-output.txt", "a")
         );
-        $cmd =  $instance->getConf('srs.srs_path').'/objs/ffmpeg/bin/ffmpeg'.
-            ' -re -i "'.
+        $ffm = '/usr/bin/ffmpeg';
+        if(file_exists($instance->getConf('srs.srs_path').'/objs/ffmpeg/bin/ffmpeg')){
+            $ffm = $instance->getConf('srs.srs_path').'/objs/ffmpeg/bin/ffmpeg';
+        }
+        $cmd =  $ffm .' '.' -re -i "'.
             "{$row['rtsp_host']}".
             '" -c copy -f flv -y '.
             "rtmp://{$instance->getConf('srs.localhost')}/{$row['app']}/{$row['stream_id']}";
