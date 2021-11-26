@@ -49,8 +49,8 @@ class EasySwooleEvent implements Event
     public static function initSwooleTable()
     {
         $tm = TableManager::getInstance();
-        $tm->add('stream',['php_pid'=>['type'=>Table::TYPE_INT,'size'=>11],],1024);
-//        $tm->add('watch',['rows'=>['type'=>Table::TYPE_STRING,'size'=>4096],],1024);
+        $tm->add('process', ['php_pid'=>['type'=>Table::TYPE_INT,'size'=>11],],1024);
+        $tm->add('stream', ['rows'=>['type'=>Table::TYPE_STRING,'size'=>4096],],1024);
 //        $tm->add('client',['stream_key'=>['type'=>Table::TYPE_STRING,'size'=>32]],1024);
     }
 
@@ -61,7 +61,7 @@ class EasySwooleEvent implements Event
     {
         $srsProcessConfig = new \EasySwoole\Component\Process\Config([
             'processName' => 'SRS',
-            'enableCoroutine' => false,
+            'enableCoroutine' => true,
             'redirectStdinStdout' => false,
         ]);
         $srsProcess = new SrsProcess($srsProcessConfig);
@@ -71,7 +71,7 @@ class EasySwooleEvent implements Event
         $ffmProcessConfig = new \EasySwoole\Component\Process\Config();
         $ffmProcessConfig->setProcessName('ffmpeg');
         $ffmProcessConfig->setPipeType(SOCK_STREAM);
-        $ffmProcessConfig->setEnableCoroutine(false);
+        $ffmProcessConfig->setEnableCoroutine(true);
         $ffmProcess = new FFmpegProcess($ffmProcessConfig);
         Di::getInstance()->set('ffmProcess',$ffmProcess->getProcess());
         Manager::getInstance()->addProcess($ffmProcess);
@@ -82,6 +82,11 @@ class EasySwooleEvent implements Event
      */
     public static function initTimer()
     {
-        \Swoole\Timer::clearAll();
+        // 每天午夜清空内存
+        $timer_id = \Swoole\Timer::tick(1000*60, function (){
+            $pid = TableManager::getInstance()->get('process')->destroy();
+            $st = TableManager::getInstance()->get('stream')->destroy();
+        });
+        \Swoole\Timer::clear($timer_id);
     }
 }

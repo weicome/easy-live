@@ -2,14 +2,9 @@
 
 namespace App\Process;
 
-use App\Util\Stream;
 use EasySwoole\Component\Process\AbstractProcess;
 use EasySwoole\Component\TableManager;
 use EasySwoole\EasySwoole\Config;
-use EasySwoole\EasySwoole\Logger;
-use FFMpeg\FFMpeg;
-use FFMpeg\Format\Video\ThreeGP;
-use FFMpeg\Format\Video\X264;
 use Swoole\Process;
 
 class FFmpegProcess extends AbstractProcess
@@ -31,50 +26,25 @@ class FFmpegProcess extends AbstractProcess
 
     private function pullStream(string $stream_key)
     {
-//        $ffmpegProcess = new Process(function (Process $process) use($stream_key){
-//            $instance = Config::getInstance();
-//            $row = Stream::get($stream_key);
-//            $ffmpeg = FFMpeg::create([
-////                'ffmpeg.binaries' => $instance->getConf('srs.srs_path').'/objs/ffmpeg/bin/ffmpeg',
-////                'ffprobe.binaries' => $instance->getConf('srs.srs_path').'/objs/ffmpeg/bin/ffprobe',
-//                'ffmpeg.binaries' => '/usr/local/bin/ffmpeg',
-//                'ffprobe.binaries' => '/usr/local/bin/ffprobe',
-//                'timeout' => 0,
-//                'ffmpeg.threads' => swoole_cpu_num(),
-//            ]);
-//            $video = $ffmpeg->open($row['rtsp_host']);
-//            $video = $ffmpeg->open(EASYSWOOLE_ROOT.DIRECTORY_SEPARATOR.'storage/setup/srs/trunk/doc/source.flv');
-//            $audio_info = $video->getStreams()->audios()->first()->all();
-//            $format = new ThreeGP();
-//            $format
-//                ->setKiloBitrate(1024)
-//                ->setAudioChannels($audio_info['channels'])
-//                ->setAdditionalParameters(['-ture','zerolatency','ultrafast','-vf','scale=-2:480','-f','flv']);
-
-//            $video->save($format,"rtmp://127.0.0.1:{$instance->getConf('srs.rtmp_port')}/{$row['app']}/{$row['stream_id']}");
-//        },false,SOCK_STREAM,false);
-//        if(($phpProcessPid = $ffmpegProcess->start()) === false) {return false;}
-//        $streamTable = TableManager::getInstance()->get('stream');
-//        $streamTable->set($stream_key,['php_pid'=>$phpProcessPid]);
         $instance = Config::getInstance();
-        $row = Stream::get($stream_key);
+        $streamTable = TableManager::getInstance()->get('stream');
+        $rows = $streamTable->get($stream_key);
+        $row = json_decode($rows['rows'],true);
         $descriptorspec = array(
             0 => array("pipe", "r"),
             1 => array("pipe", "w"),
-            2 => array("file",EASYSWOOLE_ROOT. "/Log/error-output.txt", "w")
+            2 => array("file",EASYSWOOLE_ROOT. "/Log/error-output.txt", "a")
         );
-        $process = proc_open($instance->getConf('srs.srs_path').'/objs/ffmpeg/bin/ffmpeg'.
-            ' -re -i '.
-            $row['rtsp_host'].
-            ' -c copy -f flv -y '.
-            "rtmp://{$instance->getConf('srs.localhost')}/{$row['app']}/{$row['stream_id']}",
-            $descriptorspec,$pipes);
+        $cmd =  $instance->getConf('srs.srs_path').'/objs/ffmpeg/bin/ffmpeg'.
+            ' -re -i "'.
+            "{$row['rtsp_host']}".
+            '" -c copy -f flv -y '.
+            "rtmp://{$instance->getConf('srs.localhost')}/{$row['app']}/{$row['stream_id']}";
+        echo 'cmd: '.$cmd.PHP_EOL;
+        $process = proc_open( $cmd,  $descriptorspec,$pipes);
         echo $process.PHP_EOL;
-        $streamTable = TableManager::getInstance()->get('stream');
-        $streamTable->set($stream_key,['php_pid'=>$process]);
-
-//        exec('/usr/local/bin/ffmpeg -re -i '.EASYSWOOLE_ROOT.DIRECTORY_SEPARATOR.'storage/setup/srs/trunk/doc/source.flv -c copy -f flv -y '."rtmp://127.0.0.1/{$row['app']}/{$row['stream_id']}"
-//        );
+        $processTable = TableManager::getInstance()->get('process');
+        $processTable->set($stream_key,['php_pid'=>$process]);
     }
 
     protected function onPipeReadable(Process $process)
@@ -83,7 +53,7 @@ class FFmpegProcess extends AbstractProcess
         try{
             $stream_key = $this->getProcess()->read(32);
             $streamTable = TableManager::getInstance()->get('stream');
-            if(!$streamTable->exists($stream_key)){  // false就没有启动过
+            if($streamTable->exists($stream_key)){
                 $this->pullStream($stream_key);
             }
         }catch (\Exception $exception){

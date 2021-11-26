@@ -60,44 +60,32 @@ http://127.0.0.1:9501/close
 ```
 POST http://服务器ip:服务端口/api/create 
 {
-    "app": "live",
-    "stream": "唯一名称",
+    "app": "live",   // 可选，默认live
+    "stream": "唯一名称",  // 可选，默认md5(live_host)
     "live_host": "推流地址",//不同设备rtsp地址可能不一样	
 }
 ```
-2.编辑设备
+返回值: 
 ```
-POST  http://服务器ip:服务端口/api/update 
 {
-    "stream_key" : "32位字符串",
-    "app": "live"
-    "stream": "唯一名称",
-    "live_host": "推流地址",//不同设备rtsp地址可能不一样
+    "code": 200,
+    "msg": "播放成功,记得关闭!",
+    "data": {
+        "stream_key": "cc8174b483ec50c564e9b96541dcabc5",
+        "RTMP": "rtmp://127.0.0.1/live/test123",
+        "HTTP-FLV": "http://127.0.0.1:9580/live/test123.flv",
+        "HLS": "http://127.0.0.1:9580/live/test123.m3u8",
+        "WebRTC": "webrtc://127.0.0.1/live/test123"
+    }
 }
 ```
-3.删除设备
+2.删除设备
 ```
 POST  http://服务器ip:服务端口/api/destroy 
 {
-    "stream": "唯一名称",
-    "app": "live"
+    "stream_key": "cc8174b483ec50c564e9b96541dcabc5"
 }
 ```
-4.开始播放
-```
-POST 127.0.0.1:9501/srs/play
-{
-    "stream_key": "50a3cb58a81223ef57c6ff611af7e297"
-}
-```
-5.停止播放
-```
-POST 127.0.0.1:9501/srs/close
-{
-    "stream_key": "50a3cb58a81223ef57c6ff611af7e297"
-}
-```
-停止播放后记得删除设备信息，再次调用删除接口
 
 ### 观看流视频
 ```

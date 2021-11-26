@@ -17,12 +17,12 @@ return [
         'srs_log_file' => LOG_PATH . '/srs.log' . ';',
         'daemon' => 'off;',
         'http_api' => [
-            'enabled' => 'on;',
-            'listen' => '1985;',
+            'enabled' => 'off;',
+            'listen' => '9585;',
         ],
         'http_server' => [
             'enabled' => 'on;',
-            'listen' => '8080;',
+            'listen' => '9580;',
             'dir' => EASYSWOOLE_ROOT.'/storage/setup/srs/trunk/objs/nginx/html;',
         ],
         'rtc_server' => [

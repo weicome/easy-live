@@ -3,6 +3,9 @@
 namespace App\HttpController;
 
 use App\Util\Stream;
+use EasySwoole\Component\Di;
+use EasySwoole\Component\TableManager;
+use EasySwoole\EasySwoole\Config;
 
 class Api extends BaseController
 {
@@ -10,47 +13,54 @@ class Api extends BaseController
     public function create()
     {
         try{
-            $data = $this->all();
-            if(empty($data['stream'])||empty($data['live_host'])|| empty($data['app']) || strlen($data['app'])>10){
-                throw new \Exception('参数错误',400);
+            $live_host = $this->input('live_host');
+            if(empty($live_host)){
+                throw new \Exception('参数错误,live_host是必须的',400);
             }
-            if(Stream::exists(stream_key($data['app'],$data['stream']))){
-                throw new \Exception('该资源已存在',409);
+            $app = $this->input('live') ?: 'live';
+            $stream_id = $this->input('stream') ?: md5($live_host);
+            $stream_key = stream_key($app,$stream_id);
+            $streamTable = TableManager::getInstance()->get('stream');
+            if($row = $streamTable->get($stream_key)){
+                $play = true;
+            }else{
+                $streamTable->set($stream_key,['rows'=>json_encode(['app'=>$app,'stream_id'=>$stream_id,'rtsp_host'=>$live_host])]);
+                $process =  Di::getInstance()->get('ffmProcess');
+                $play = $process->write($stream_key);
+                $row = ['app'=>$app,'stream_id'=>$stream_id,'rtsp_host'=>$live_host];
             }
-            Stream::set($data['stream'],$data['live_host'],$data['app']);
-            $this->success(['stream_key'=>stream_key($data['app'],$data['stream'])]);
+            $localhost = Config::getInstance()->getConf('srs.localhost');
+            $httpport = Config::getInstance()->getConf('srs.srs_config.http_server.listen');
+            $httpport = substr($httpport,0,strpos($httpport,';'));
+            $play ? $this->success([
+                'stream_key' => $stream_key,
+                'RTMP'=> "rtmp://{$localhost}/{$row['app']}/{$row['stream_id']}",
+                'HTTP-FLV'=> "http://{$localhost}:{$httpport}/{$row['app']}/{$row['stream_id']}.flv",
+                'HLS'=> "http://{$localhost}:{$httpport}/{$row['app']}/{$row['stream_id']}.m3u8",
+                'WebRTC'=> "webrtc://{$localhost}/{$row['app']}/{$row['stream_id']}",
+            ],'播放成功') : $this->error();
         }catch (\Exception $exception){
             throw $exception;
-        }
-    }
-
-    // 更新
-    public function update()
-    {
-        try{
-            $data = $this->all();
-            if(empty($data['stream_key'])||empty($data['stream']) || empty($data['live_host']) || empty($data['app']) || strlen($data['app'])>10){
-                throw new \Exception('参数错误');
-            }
-            if(!Stream::exists($data['stream_key'])){
-                throw new \Exception('该资源不存在');
-            }
-            Stream::del($data['stream_key']);
-            Stream::set($data['stream'],$data['live_host'],$data['app']);
-            $this->success(['stream_key'=>stream_key($data['app'],$data['stream'])]);
-        }catch (\Exception $exception){
-            throw  $exception;
         }
     }
 
     public function destroy()
     {
         try{
-            $data = $this->all();
-            if(empty($data['stream']) || empty($data['app'])){
-                throw new \Exception('参数错误');
+            $stream_key = $this->input('stream_key');
+            if(empty($stream_key)){
+                throw new \Exception('参数错误',400);
             }
-            Stream::del(stream_key($data['app'],$data['stream']));
+            $processTable = TableManager::getInstance()->get('process');
+            if($processTable->exist($stream_key)){
+                $php_pid = $processTable->get($stream_key,'php_pid');
+                \swoole_process::kill($php_pid,0);
+                exec("pkill -P {$php_pid}");
+//                proc_close($php_pid);
+                $processTable->del($stream_key);
+            }
+            $streamTable = TableManager::getInstance()->get('stream');
+            $streamTable->del($stream_key);
             $this->success([],'删除成功');
         }catch (\Exception $exception){
             throw  $exception;

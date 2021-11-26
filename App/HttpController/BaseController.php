@@ -26,13 +26,14 @@ class BaseController extends Controller
 
     protected function input(string $key)
     {
-        return $this->request()->getRequestParam($key);
+        return trim($this->request()->getRequestParam($key));
     }
 
     protected function all()
     {
         return $this->request()->getRequestParam();
     }
+
     protected function raw(): string
     {
         return $this->request()->getBody()->__toString();
