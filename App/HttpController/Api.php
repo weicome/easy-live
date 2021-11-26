@@ -22,6 +22,7 @@ class Api extends BaseController
             $stream_key = stream_key($app,$stream_id);
             $streamTable = TableManager::getInstance()->get('stream');
             if($row = $streamTable->get($stream_key)){
+                $row = json_decode($row['rows'],true);
                 $play = true;
             }else{
                 $streamTable->set($stream_key,['rows'=>json_encode(['app'=>$app,'stream_id'=>$stream_id,'rtsp_host'=>$live_host])]);
