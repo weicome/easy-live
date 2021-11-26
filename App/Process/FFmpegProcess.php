@@ -33,8 +33,10 @@ class FFmpegProcess extends AbstractProcess
         $descriptorspec = array(
             0 => array("pipe", "r"),
             1 => array("pipe", "w"),
-            2 => array("file",EASYSWOOLE_ROOT. "/Log/error-output.txt", "a")
         );
+        if($instance->getConf('srs.log_debug')){
+            $descriptorspec[2] = array("file",EASYSWOOLE_ROOT. "/Log/error-output.txt", "a");
+        }
         $ffm = '/usr/bin/ffmpeg';
         if(file_exists($instance->getConf('srs.srs_path').'/objs/ffmpeg/bin/ffmpeg')){
             $ffm = $instance->getConf('srs.srs_path').'/objs/ffmpeg/bin/ffmpeg';

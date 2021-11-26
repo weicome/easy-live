@@ -48,4 +48,5 @@ return [
             ],
         ],
     ],
+    'log_debug' => true,
 ];
