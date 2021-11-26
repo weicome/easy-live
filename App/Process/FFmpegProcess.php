@@ -41,10 +41,10 @@ class FFmpegProcess extends AbstractProcess
         if(file_exists($instance->getConf('srs.srs_path').'/objs/ffmpeg/bin/ffmpeg')){
             $ffm = $instance->getConf('srs.srs_path').'/objs/ffmpeg/bin/ffmpeg';
         }
-        $cmd =  $ffm .' '.' -re -i "'.
+        $cmd =  $ffm .' '.' -rtsp_transport tcp -i "'.
             "{$row['rtsp_host']}".
             '" -c copy -f flv -y '.
-            "rtmp://{$instance->getConf('srs.localhost')}/{$row['app']}/{$row['stream_id']}";
+            "rtmp://localhost/{$row['app']}/{$row['stream_id']}";
         echo 'cmd: '.$cmd.PHP_EOL;
         $process = proc_open( $cmd,  $descriptorspec,$pipes);
         echo $process.PHP_EOL;

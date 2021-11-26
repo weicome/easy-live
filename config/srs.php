@@ -18,7 +18,7 @@ return [
         'daemon' => 'off;',
         'http_api' => [
             'enabled' => 'off;',
-            'listen' => '9585;',
+            'listen' => '9581;',
         ],
         'http_server' => [
             'enabled' => 'on;',
