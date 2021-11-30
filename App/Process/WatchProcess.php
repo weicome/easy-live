@@ -21,7 +21,8 @@ class WatchProcess extends AbstractProcess
 
     private function loadTimer()
     {
-        $timer = (int)Config::getInstance()->getConf('srs.timer') ?: 60 * 5;
+        $timer = (int)Config::getInstance()->getConf('srs.keep_alive') ?: 60 * 5;
+        echo $timer.PHP_EOL;
         Timer::getInstance()->loop($timer * 1000, function () use($timer) {
             $now = time();
             foreach (self::$streamTimer as $key => $outTime){
@@ -29,7 +30,7 @@ class WatchProcess extends AbstractProcess
                     $this->clearTable($key);
                 }
             }
-            echo '当前时间'.date('Y-m-d H:i:s').PHP_EOL;
+            echo '当前时间'.date('Y-m-d H:i:s',$now).PHP_EOL;
         });
     }
 
