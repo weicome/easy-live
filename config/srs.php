@@ -49,4 +49,5 @@ return [
         ],
     ],
     'log_debug' => true,
+    'keep_alive' => 180,   //s
 ];

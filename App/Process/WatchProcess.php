@@ -29,6 +29,7 @@ class WatchProcess extends AbstractProcess
                     $this->clearTable($key);
                 }
             }
+            echo '当前时间'.date('Y-m-d H:i:s').PHP_EOL;
         });
     }
 
@@ -56,7 +57,8 @@ class WatchProcess extends AbstractProcess
         $msg = json_decode($process->read(),true); // 用于获取主进程给当前进程发送的消息
         switch (array_keys($msg)[0]){
             case 'add':
-                self::$streamTimer[$msg['add']] = time();
+                $time = Config::getInstance()->getConf('srs.keep_alive') ?: 180;
+                self::$streamTimer[$msg['add']] = (int)$time;
                 break;
             case 'clear':
                 $this->clearTable($msg['clear']);
