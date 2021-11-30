@@ -18,9 +18,9 @@ class EasySwooleEvent implements Event
     {
         date_default_timezone_set('Asia/Shanghai');
         $instance = Config::getInstance();
-        defined('TEMP_PATH') or define('TEMP_PATH',$instance->getConf('TEMP_DIR'));
-        defined('LOG_PATH') or define('LOG_PATH', EASYSWOOLE_ROOT.'/Log');
-        defined('SRS_ERROR') or define('SRS_ERROR',1);
+        defined('TEMP_PATH') or define('TEMP_PATH', $instance->getConf('TEMP_DIR'));
+        defined('LOG_PATH') or define('LOG_PATH', EASYSWOOLE_ROOT . '/Log');
+        defined('SRS_ERROR') or define('SRS_ERROR', 1);
         defined('SRS_SUCCESS') or define('SRS_SUCCESS', 0);
     }
 
@@ -38,8 +38,8 @@ class EasySwooleEvent implements Event
     public static function loadConfig()
     {
         $instance = Config::getInstance();
-        foreach (glob(EASYSWOOLE_ROOT.DIRECTORY_SEPARATOR.'config/*.php') as $filePath){
-            $instance->setConf(rtrim(basename($filePath),'.php'),require_once $filePath);
+        foreach (glob(EASYSWOOLE_ROOT . DIRECTORY_SEPARATOR . 'config/*.php') as $filePath) {
+            $instance->setConf(rtrim(basename($filePath), '.php'), require_once $filePath);
         }
     }
 
@@ -49,9 +49,9 @@ class EasySwooleEvent implements Event
     public static function initSwooleTable()
     {
         $tm = TableManager::getInstance();
-        $tm->add('process', ['php_pid'=>['type'=>Table::TYPE_INT,'size'=>11],],1024);
-        $tm->add('stream', ['rows'=>['type'=>Table::TYPE_STRING,'size'=>4096],],1024);
-//        $tm->add('client',['stream_key'=>['type'=>Table::TYPE_STRING,'size'=>32]],1024);
+        $tm->add('process', ['php_pid' => ['type' => Table::TYPE_INT, 'size' => 11],], 1024);
+        $tm->add('stream', ['rows' => ['type' => Table::TYPE_STRING, 'size' => 4096],], 1024);
+        //        $tm->add('client',['stream_key'=>['type'=>Table::TYPE_STRING,'size'=>32]],1024);
     }
 
     /**
@@ -65,7 +65,7 @@ class EasySwooleEvent implements Event
             'redirectStdinStdout' => false,
         ]);
         $srsProcess = new SrsProcess($srsProcessConfig);
-        Di::getInstance()->set('srsProcess',$srsProcess->getProcess());
+        Di::getInstance()->set('srsProcess', $srsProcess->getProcess());
         Manager::getInstance()->addProcess($srsProcess);
 
         $ffmProcessConfig = new \EasySwoole\Component\Process\Config();
@@ -74,7 +74,7 @@ class EasySwooleEvent implements Event
         $ffmProcessConfig->setEnableCoroutine(true);
         $ffmProcessConfig->setRedirectStdinStdout(false);
         $ffmProcess = new FFmpegProcess($ffmProcessConfig);
-        Di::getInstance()->set('ffmProcess',$ffmProcess->getProcess());
+        Di::getInstance()->set('ffmProcess', $ffmProcess->getProcess());
         Manager::getInstance()->addProcess($ffmProcess);
     }
 
@@ -84,7 +84,7 @@ class EasySwooleEvent implements Event
     public static function initTimer()
     {
         // 每天午夜清空内存
-        $timer_id = \Swoole\Timer::tick(1000*60, function (){
+        $timer_id = \Swoole\Timer::tick(1000 * 60, function () {
             $pid = TableManager::getInstance()->get('process')->destroy();
             $st = TableManager::getInstance()->get('stream')->destroy();
         });
