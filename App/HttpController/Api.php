@@ -26,11 +26,17 @@ class Api extends BaseController
             $stream_id = $this->input('stream') ?: md5($live_host);
             $stream_key = stream_key($app, $stream_id);
             $streamTable = TableManager::getInstance()->get('stream');
-            if ($row = $streamTable->get($stream_key)) {
-                $row = json_decode($row['rows'], true);
+            $clientTable = TableManager::getInstance()->get('client');
+            $watchProcess = Di::getInstance()->get('watchProcess');
+            $msg = ['add'=>$stream_key];
+            $watchProcess->write(json_encode($msg));
+            if ($row = $streamTable->get($stream_key,'rows')) {
+                $clientTable->incr($stream_key,'watch',1);
+                $row = json_decode($row, true);
                 $play = true;
             } else {
                 $streamTable->set($stream_key, ['rows' => json_encode(['app' => $app, 'stream_id' => $stream_id, 'rtsp_host' => $live_host])]);
+                $clientTable->set($stream_key, ['watch'=>1]);
                 $process =  Di::getInstance()->get('ffmProcess');
                 $play = $process->write($stream_key);
                 $row = ['app' => $app, 'stream_id' => $stream_id, 'rtsp_host' => $live_host];
@@ -40,6 +46,7 @@ class Api extends BaseController
             $httpport = substr($httpport, 0, strpos($httpport, ';'));
             $play ? $this->success([
                 'stream_key' => $stream_key,
+                'client_nums' => $clientTable->get($stream_key,'watch'),
                 'RTMP' => "rtmp://{$localhost}/{$row['app']}/{$row['stream_id']}",
                 'HTTP-FLV' => "http://{$localhost}:{$httpport}/{$row['app']}/{$row['stream_id']}.flv",
                 'HLS' => "http://{$localhost}:{$httpport}/{$row['app']}/{$row['stream_id']}.m3u8",
@@ -60,20 +67,41 @@ class Api extends BaseController
             $stream_key = $data['stream_key'];
             $streamTable = TableManager::getInstance()->get('stream');
             if ($streamTable->exist($stream_key)) {
-                $process =  Di::getInstance()->get('ffmProcess');
-                $process->write('close-' . $stream_key);
-                $streamTable->del($stream_key);
-                $processTable = TableManager::getInstance()->get('process');
-                if ($php_pid = $processTable->get($stream_key, 'php_pid')) {
-                    echo '进程ID: ' . $php_pid . PHP_EOL;
-                    \swoole_process::kill($php_pid, 0);
-                    exec("pkill -P {$php_pid}");
-                    exec("kill -9 {$php_pid}");
+                $clientTable = TableManager::getInstance()->get('client');
+                if($cid = $clientTable->get($stream_key,'watch')){
+                    if($cid > 1) {
+                        $clientTable->decr($stream_key, 'watch', 1);
+                    }else{
+                        $cid = 0;
+                        $watchProcess = Di::getInstance()->get('watchProcess');
+                        $msg = ['clear'=>$stream_key];
+                        $watchProcess->write(json_encode($msg));
+                    }
+                }else{
+                    $cid = 0;
+                    $watchProcess = Di::getInstance()->get('watchProcess');
+                    $msg = ['clear'=>$stream_key];
+                    $watchProcess->write(json_encode($msg));
                 }
+                $this->success(['stream_key' => $stream_key,'client_nums'=>$cid], '删除成功');
             }
-            $this->success([], '删除成功');
+            $this->error([], '删除失败');
         } catch (\Exception $exception) {
             throw  $exception;
         }
+    }
+
+    public function heartbeat()
+    {
+        $stream_key = json_decode($this->raw(),true);
+        if(empty($stream_key) || !isset($stream_key['keep_alive']) || empty($stream_key['keep_alive'])){
+            throw new \Exception('参数错误', 400);
+        }
+        $watchProcess = Di::getInstance()->get('watchProcess');
+        foreach ($stream_key['keep_alive'] as $key){
+            $msg = ['add'=>$key];
+            $watchProcess->write(json_encode($msg));
+        }
+        $this->success();
     }
 }

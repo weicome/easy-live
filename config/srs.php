@@ -4,7 +4,7 @@ $host = 'http://127.0.0.1:8080/srs';//不要瞎改
 $rtmp_port = '1935';
 
 return [
-    'localhost' => '127.0.0.1',
+    'localhost' => '192.168.0.121',
     'srs_path' => EASYSWOOLE_ROOT . '/storage/setup/srs/trunk',
     'rtmp_port' => $rtmp_port,
     'srs_config' => [
@@ -33,7 +33,7 @@ return [
         ],
         'vhost __defaultVhost__' => [
             'hls' => [
-                'enabled' => 'on;'
+                'enabled' => 'off;'
             ],
             'http_remux' => [
                 'enabled' => 'on;',

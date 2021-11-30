@@ -5,6 +5,7 @@ namespace EasySwoole\EasySwoole;
 
 use App\Process\FFmpegProcess;
 use App\Process\SrsProcess;
+use App\Process\WatchProcess;
 use EasySwoole\Component\Di;
 use EasySwoole\Component\Process\Manager;
 use EasySwoole\Component\TableManager;
@@ -51,7 +52,7 @@ class EasySwooleEvent implements Event
         $tm = TableManager::getInstance();
         $tm->add('process', ['php_pid' => ['type' => Table::TYPE_INT, 'size' => 11],], 1024);
         $tm->add('stream', ['rows' => ['type' => Table::TYPE_STRING, 'size' => 4096],], 1024);
-        //        $tm->add('client',['stream_key'=>['type'=>Table::TYPE_STRING,'size'=>32]],1024);
+        $tm->add('client',['watch'=>['type'=>Table::TYPE_INT,'size'=>32]],1024);
     }
 
     /**
@@ -76,6 +77,15 @@ class EasySwooleEvent implements Event
         $ffmProcess = new FFmpegProcess($ffmProcessConfig);
         Di::getInstance()->set('ffmProcess', $ffmProcess->getProcess());
         Manager::getInstance()->addProcess($ffmProcess);
+
+        $watchProcessConfig = new \EasySwoole\Component\Process\Config([
+            'processName' => 'Watch',
+            'enableCoroutine' => true,
+            'redirectStdinStdout' => false,
+        ]);
+        $watchProcess = new WatchProcess($watchProcessConfig);
+        Di::getInstance()->set('watchProcess', $watchProcess->getProcess());
+        Manager::getInstance()->addProcess($watchProcess);
     }
 
     /**

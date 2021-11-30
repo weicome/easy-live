@@ -86,7 +86,17 @@ POST  http://服务器ip:服务端口/api/destroy
     "stream_key": "cc8174b483ec50c564e9b96541dcabc5"
 }
 ```
-
+3.为每个流签名保活
+```
+POST  http://服务器ip:服务端口/api/heartbeat 
+{
+    "keep_alive": [
+        "cc8174b483ec50c564e9b96541dcabc5",
+        "cc8174b483ec50c564e9b96541dcabc2",
+    ]
+}
+```
+每个直播流创建后有5分钟的保活时间，请在此执行定时保活
 ### 观看流视频
 ```
 打开下面的页面播放流（若SRS不在本机，请将localhost更换成服务器IP）:

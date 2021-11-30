@@ -33,6 +33,8 @@ class Router extends AbstractRouter
             // 创建视频流
             $routeCollector->addRoute('POST','/create','/Api/create');
             $routeCollector->addRoute(['DELETE','POST'],'/delete','/Api/destroy');
+
+            $routeCollector->addRoute('POST', '/heartbeat','/Api/heartbeat');
         });
     }
 }

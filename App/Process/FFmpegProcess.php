@@ -53,9 +53,23 @@ class FFmpegProcess extends AbstractProcess
         $process = proc_open($cmd,  $descriptorspec, $pipes);
         $this->childProc[$stream_key] = [$process, $pipes];
         echo $process . PHP_EOL;
-        $pinfo = json_encode(proc_get_status($process));
+        $pinfo = proc_get_status($process);
         $processTable = TableManager::getInstance()->get('process');
         $processTable->set($stream_key, ['php_pid' => $pinfo['pid']]);
+    }
+
+    private function closeStream(string $stream_key)
+    {
+        $msg = explode('-', $stream_key);
+        if (list($proc, $pipes) = $this->childProc[$msg[1]]) {
+            echo '资源'.json_encode($pipes).PHP_EOL;
+            if (isset($pipes[0])) fclose($pipes[0]);
+            if (isset($pipes[1])) fclose($pipes[1]);
+            if (isset($pipes[2])) fclose($pipes[2]);
+            $res = proc_terminate($proc);
+            echo '退出状态:' . $res . PHP_EOL;
+            unset($this->childProc[$msg[1]]);
+        }
     }
 
     protected function onPipeReadable(Process $process)
@@ -65,14 +79,7 @@ class FFmpegProcess extends AbstractProcess
             $stream_key = $this->getProcess()->read(38);
             $streamTable = TableManager::getInstance()->get('stream');
             if (strlen($stream_key) > 32) {
-                $msg = explode('-', $stream_key);
-                if (list($proc, $pipes) = $this->childProc[$msg[1]]) {
-                    if (isset($pipes[0])) fclose($pipes[0]);
-                    if (isset($pipes[1])) fclose($pipes[1]);
-                    if (isset($pipes[2])) fclose($pipes[2]);
-                    $res = proc_terminate($proc);
-                    echo '退出状态:' . $res . PHP_EOL;
-                }
+                $this->closeStream($stream_key);
             } else {
                 if ($streamTable->exists($stream_key)) {
                     $this->pullStream($stream_key);
