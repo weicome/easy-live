@@ -24,7 +24,7 @@ class BaseController extends Controller
         $this->response()->write(file_get_contents($file));
     }
 
-    protected function input(string $key)
+    protected function input(?string $key)
     {
         return trim($this->request()->getRequestParam($key));
     }

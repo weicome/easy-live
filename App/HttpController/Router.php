@@ -32,7 +32,7 @@ class Router extends AbstractRouter
         $routeCollector->addGroup('/api',function (RouteCollector $routeCollector){
             // 创建视频流
             $routeCollector->addRoute('POST','/create','/Api/create');
-            $routeCollector->addRoute('DELETE','/delete','/Api/destroy');
+            $routeCollector->addRoute(['DELETE','POST'],'/delete','/Api/destroy');
         });
     }
 }

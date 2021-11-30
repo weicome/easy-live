@@ -2,7 +2,7 @@
 
 namespace App\HttpController;
 
-use App\Util\Stream;
+
 use EasySwoole\Component\Di;
 use EasySwoole\Component\TableManager;
 use EasySwoole\EasySwoole\Config;
@@ -13,11 +13,16 @@ class Api extends BaseController
     public function create()
     {
         try{
-            $live_host = $this->input('live_host');
-            if(empty($live_host)){
+            $data = $this->raw();
+            if(empty($data)){
+                throw new \Exception('参数错误,live_host是必须的',400);
+            }
+            $data = json_decode($data,true);
+            if(!isset($data['live_host'])||empty($data['live_host'])){
                 throw new \Exception('参数错误,live_host是必须的',400);
             }
             $app = $this->input('live') ?: 'live';
+            $live_host = $data['live_host'];
             $stream_id = $this->input('stream') ?: md5($live_host);
             $stream_key = stream_key($app,$stream_id);
             $streamTable = TableManager::getInstance()->get('stream');
@@ -48,20 +53,17 @@ class Api extends BaseController
     public function destroy()
     {
         try{
-            $stream_key = $this->input('stream_key');
-            if(empty($stream_key)){
+            $data = json_decode($this->raw(),true);
+            if(empty($data) || !isset($data['stream_key']) || empty($data['stream_key'])){
                 throw new \Exception('参数错误',400);
             }
-            $processTable = TableManager::getInstance()->get('process');
+            $stream_key = $data['stream_key'];
+            $processTable = TableManager::getInstance()->get('stream');
             if($processTable->exist($stream_key)){
-                $php_pid = $processTable->get($stream_key,'php_pid');
-                \swoole_process::kill($php_pid,0);
-                exec("pkill -P {$php_pid}");
-//                proc_close($php_pid);
+                $process =  Di::getInstance()->get('ffmProcess');
+                $process->write('close-'.$stream_key);
                 $processTable->del($stream_key);
             }
-            $streamTable = TableManager::getInstance()->get('stream');
-            $streamTable->del($stream_key);
             $this->success([],'删除成功');
         }catch (\Exception $exception){
             throw  $exception;

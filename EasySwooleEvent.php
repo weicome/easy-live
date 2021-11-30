@@ -72,6 +72,7 @@ class EasySwooleEvent implements Event
         $ffmProcessConfig->setProcessName('ffmpeg');
         $ffmProcessConfig->setPipeType(SOCK_STREAM);
         $ffmProcessConfig->setEnableCoroutine(true);
+        $ffmProcessConfig->setRedirectStdinStdout(false);
         $ffmProcess = new FFmpegProcess($ffmProcessConfig);
         Di::getInstance()->set('ffmProcess',$ffmProcess->getProcess());
         Manager::getInstance()->addProcess($ffmProcess);
