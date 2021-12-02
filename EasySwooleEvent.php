@@ -23,6 +23,18 @@ class EasySwooleEvent implements Event
         defined('LOG_PATH') or define('LOG_PATH', EASYSWOOLE_ROOT . '/Log');
         defined('SRS_ERROR') or define('SRS_ERROR', 1);
         defined('SRS_SUCCESS') or define('SRS_SUCCESS', 0);
+        \EasySwoole\Component\Di::getInstance()->set(\EasySwoole\EasySwoole\SysConst::HTTP_GLOBAL_ON_REQUEST, function (\EasySwoole\Http\Request $request, \EasySwoole\Http\Response $response) {
+            $origin = $request->getHeader('origin')[0] ?? '*';
+            $response->withHeader('Access-Control-Allow-Origin', $origin);
+            $response->withHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+            $response->withHeader('Access-Control-Allow-Credentials', 'true');
+            $response->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, token');
+            if ($request->getMethod() === 'OPTIONS') {
+                $response->withStatus(\EasySwoole\Http\Message\Status::CODE_OK);
+                return false;
+            }
+            return true;
+        });
     }
 
     public static function mainServerCreate(EventRegister $register)
@@ -52,7 +64,7 @@ class EasySwooleEvent implements Event
         $tm = TableManager::getInstance();
         $tm->add('process', ['php_pid' => ['type' => Table::TYPE_INT, 'size' => 11],], 1024);
         $tm->add('stream', ['rows' => ['type' => Table::TYPE_STRING, 'size' => 4096],], 1024);
-        $tm->add('client',['watch'=>['type'=>Table::TYPE_INT,'size'=>32]],1024);
+        $tm->add('client', ['watch' => ['type' => Table::TYPE_INT, 'size' => 32]], 1024);
     }
 
     /**
