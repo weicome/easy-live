@@ -22,15 +22,15 @@ class WatchProcess extends AbstractProcess
     private function loadTimer()
     {
         $timer = (int)Config::getInstance()->getConf('srs.keep_alive') ?: 60 * 5;
-        echo $timer.PHP_EOL;
-        Timer::getInstance()->loop($timer * 1000, function () use($timer) {
+        echo $timer . PHP_EOL;
+        Timer::getInstance()->loop($timer * 1000, function () use ($timer) {
             $now = time();
-            foreach (self::$streamTimer as $key => $outTime){
-                if($outTime < $now){
+            foreach (self::$streamTimer as $key => $outTime) {
+                if ($outTime < $now) {
                     $this->clearTable($key);
                 }
             }
-            echo '当前时间'.date('Y-m-d H:i:s',$now).PHP_EOL;
+            echo '当前时间' . date('Y-m-d H:i:s', $now) . PHP_EOL;
         });
     }
 
@@ -43,7 +43,7 @@ class WatchProcess extends AbstractProcess
         $clientTable = TableManager::getInstance()->get('client');
         $clientTable->del($stream_key);
         $streamTable->del($stream_key);
-        $php_pid = $processTable->get($stream_key,'php_pid');
+        $php_pid = $processTable->get($stream_key, 'php_pid');
         $processTable->del($stream_key);
         \swoole_process::kill($php_pid, 0);
         exec("pkill -P {$php_pid}");
@@ -55,11 +55,11 @@ class WatchProcess extends AbstractProcess
     {
         // 该回调可选
         // 当主进程对子进程发送消息的时候 会触发
-        $msg = json_decode($process->read(),true); // 用于获取主进程给当前进程发送的消息
-        switch (array_keys($msg)[0]){
+        $msg = json_decode($process->read(), true); // 用于获取主进程给当前进程发送的消息
+        switch (array_keys($msg)[0]) {
             case 'add':
                 $time = Config::getInstance()->getConf('srs.keep_alive') ?: 180;
-                self::$streamTimer[$msg['add']] = (int)$time;
+                self::$streamTimer[$msg['add']] = (int)time() + $time;
                 break;
             case 'clear':
                 $this->clearTable($msg['clear']);
